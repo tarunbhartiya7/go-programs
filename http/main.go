@@ -49,71 +49,77 @@ func getNextID() int {
 	return max + 1
 }
 
-func main() {
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "OK")
-	})
-	http.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		switch r.Method {
-		case http.MethodGet:
-			json.NewEncoder(w).Encode(productList)
-		case http.MethodPost:
-			var p Product
-			if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-				http.Error(w, "Invalid JSON", http.StatusBadRequest)
-				return
-			}
-			p.ID = getNextID()
-			productList = append(productList, p)
-			w.WriteHeader(http.StatusCreated)
-			json.NewEncoder(w).Encode(p)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	})
-	http.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		idStr := strings.TrimPrefix(r.URL.Path, "/api/")
-		if idx := strings.Index(idStr, "/"); idx != -1 {
-			idStr = idStr[:idx]
-		}
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			http.Error(w, "Invalid ID", http.StatusBadRequest)
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "OK")
+}
+
+func handleAPI(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	switch r.Method {
+	case http.MethodGet:
+		json.NewEncoder(w).Encode(productList)
+	case http.MethodPost:
+		var p Product
+		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
-		switch r.Method {
-		case http.MethodGet:
-			p := findProductByID(id)
-			if p == nil {
-				http.Error(w, "Product not found", http.StatusNotFound)
-				return
-			}
-			json.NewEncoder(w).Encode(p)
-		case http.MethodPut:
-			p := findProductByID(id)
-			if p == nil {
-				http.Error(w, "Product not found", http.StatusNotFound)
-				return
-			}
-			var updated Product
-			if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
-				http.Error(w, "Invalid JSON", http.StatusBadRequest)
-				return
-			}
-			p.Name = updated.Name
-			p.Price = updated.Price
-			json.NewEncoder(w).Encode(p)
-		case http.MethodDelete:
-			if !removeProductByID(id) {
-				http.Error(w, "Product not found", http.StatusNotFound)
-				return
-			}
-			w.WriteHeader(http.StatusNoContent)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		p.ID = getNextID()
+		productList = append(productList, p)
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(p)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func handleAPIByID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/")
+	if idx := strings.Index(idStr, "/"); idx != -1 {
+		idStr = idStr[:idx]
+	}
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+	switch r.Method {
+	case http.MethodGet:
+		p := findProductByID(id)
+		if p == nil {
+			http.Error(w, "Product not found", http.StatusNotFound)
+			return
 		}
-	})
+		json.NewEncoder(w).Encode(p)
+	case http.MethodPut:
+		p := findProductByID(id)
+		if p == nil {
+			http.Error(w, "Product not found", http.StatusNotFound)
+			return
+		}
+		var updated Product
+		if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+		p.Name = updated.Name
+		p.Price = updated.Price
+		json.NewEncoder(w).Encode(p)
+	case http.MethodDelete:
+		if !removeProductByID(id) {
+			http.Error(w, "Product not found", http.StatusNotFound)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func main() {
+	http.HandleFunc("/health", handleHealth)
+	http.HandleFunc("/api", handleAPI)
+	http.HandleFunc("/api/", handleAPIByID)
 	http.ListenAndServe(":8080", nil)
 }
