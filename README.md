@@ -38,3 +38,14 @@ cd <folder>
 go run .
 ```
 Example: `cd bank && go run .`
+
+## Important Go Commands
+
+| Command | Description |
+|---------|-------------|
+| `go version` | Check current Go version |
+| `go mod init example.com/app` | Create a new Go module |
+| `go run <filename>` | Run a Go program |
+| `goenv` | Manage multiple Go versions (like pyenv) |
+| `goenv versions` | List available Go versions |
+| `air` | Live reload for Go (like nodemon) |
