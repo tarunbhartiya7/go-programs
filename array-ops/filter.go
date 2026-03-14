@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 type Product struct {
 	Name  string
@@ -50,4 +53,26 @@ func main() {
 		return p.Price > 200
 	})
 	fmt.Println(filtered)
+
+	numbersCopy := numbers[:]
+	numbersCopy[1] = 100
+	fmt.Println("numbersCopy:", numbersCopy)
+	fmt.Println("numbers:", numbers)
+
+	// use slices.clone to create a copy of the array
+	numbersCopy = slices.Clone(numbers)
+	numbersCopy[1] = 200
+	fmt.Println("numbersCopy:", numbersCopy)
+	fmt.Println("numbers:", numbers)
+
+	// use make to create a copy of the array
+	numbersCopy = make([]int, len(numbers))
+	copy(numbersCopy, numbers)
+	numbersCopy[1] = 300
+	fmt.Println("numbersCopy:", numbersCopy)
+	fmt.Println("numbers:", numbers)
+
+	moreNums := []int{400, 500, 600}
+	combinedArray := append(numbersCopy, moreNums...)
+	fmt.Println("combinedArray:", combinedArray)
 }
